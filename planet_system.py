@@ -7,7 +7,8 @@ class PlanetSystem:
         self.r = r
         self.colonized = False
         self.tech_level = 0
-        self.color = 'yellow'  # цвет по умолчанию
+        self.color = 'yellow'
+        self.detection_radius = 0  # начальный радиус обнаружения
 
     def get_position(self):
         x = 300 + 250 * self.r * math.cos(self.theta)
@@ -18,8 +19,14 @@ class PlanetSystem:
         if not self.colonized and random.random() < chance:
             self.colonized = True
             self.color = self.random_color()
+            self.detection_radius = 1  # стартовый радиус при рождении цивилизации
 
     def random_color(self):
-        # Возвращает случайный цвет, например, в HEX формате
-        r = lambda: random.randint(0,255)
+        r = lambda: random.randint(0, 255)
         return f'#{r():02x}{r():02x}{r():02x}'
+
+    def update_detection_radius(self):
+        # скорость увеличения радиуса пропорциональна уровню технологии
+        growth_speed = 0.1 * (self.tech_level + 1)  # например, базовая 0.1, умноженная на tech_level+1
+        if self.colonized:
+            self.detection_radius += growth_speed
