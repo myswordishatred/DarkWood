@@ -1,11 +1,12 @@
 from tkinter import *
+from tkinter import ttk
 from planet_generator import generate_planets
 from planet_renderer import draw_planets
 from animation import update_planets
 
 window = Tk()
 window.title("DarkWood")
-window.geometry('800x600')
+window.geometry('1100x800')
 
 canvas = Canvas(bg='black', width=600, height=500)
 canvas.place(x=10, y=20)
@@ -13,40 +14,98 @@ canvas.place(x=10, y=20)
 planets_number = Spinbox(from_=50, to=1000)
 planets_number.place(x=615, y=50)
 
-show_radii = BooleanVar(value=False)  # Переменная для чекбокса
+Label(window, text="Шанс появления жизни").place(x=615, y=80)
+life_spawn_chance = DoubleVar(value=0.001)
+Spinbox(window, from_=0.0, to=1.0, increment=0.001, textvariable=life_spawn_chance, format="%.3f").place(x=615, y=100)
 
+Label(window, text="Шанс агрессии").place(x=615, y=130)
+aggression_chance = DoubleVar(value=0.5)
+Spinbox(window, from_=0.0, to=1.0, increment=0.01, textvariable=aggression_chance, format="%.2f").place(x=615, y=150)
+
+Label(window, text="Скорость моделирования (мс)").place(x=615, y=180)
+simulation_speed = IntVar(value=50)
+Spinbox(window, from_=10, to=1000, increment=10, textvariable=simulation_speed).place(x=615, y=200)
+
+show_radii = BooleanVar(value=False)
 checkbox = Checkbutton(text='Показать радиусы', variable=show_radii)
-checkbox.place(x=670, y=180)
+checkbox.place(x=670, y=230)
+
+log_text = Text(window, width=40, height=10, state=DISABLED)
+log_text.place(x=670, y=330)
+
+tree = ttk.Treeview(window)
+tree['columns'] = ('tech_level', 'friends', 'destroyed')
+tree.heading('#0', text='Название')
+tree.heading('tech_level', text='Уровень технологии')
+tree.heading('friends', text='Друзья')
+tree.heading('destroyed', text='Уничтожила')
+tree.column('tech_level', width=100)
+tree.column('friends', width=200)
+tree.column('destroyed', width=200)
+tree.place(x=10, y=530, width=760, height=210)
 
 planets = []
 
+def log_event(message):
+    log_text.config(state=NORMAL)
+    log_text.insert(END, message + "\n")
+    log_text.see(END)
+    log_text.config(state=DISABLED)
+
 def gCreate():
     global planets
-    number = int(planets_number.get())
-    planets = generate_planets(number)
+    planets = generate_planets(int(planets_number.get()), aggression_chance.get())
     draw_planets_wrapper()
+    update_tree()
 
 def draw_planets_wrapper():
-    # Вызываем функцию рисования с учетом состояния чекбокса
-    canvas.delete('all')
+    draw_planets(canvas, planets, show_radii=show_radii.get())
+
+def update_tree():
+    tree.delete(*tree.get_children())
     for planet in planets:
-        x, y = planet.get_position()
-        canvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill=planet.color)
-        if show_radii.get() and planet.colonized:
-            r = planet.detection_radius
-            canvas.create_oval(x - r, y - r, x + r, y + r, outline='white')
+        if planet.colonized:
+            friends_names = ", ".join(sorted(friend.name for friend in planet.connections))
+            destroyed_names = ", ".join(sorted(planet.destroyed_planets))
+            tree.insert('', END, text=planet.name,
+                        values=(f"{planet.tech_level:.2f}", friends_names, destroyed_names))
 
 def animate():
-    update_planets(planets, speed=0.01, spawn_chance=0.001)
+    update_planets(planets, canvas, log_event, speed=0.01, spawn_chance=life_spawn_chance.get())
     draw_planets_wrapper()
-    window.after(50, animate)
+    update_tree()
+    window.after(simulation_speed.get(), animate)
 
 def gStart():
     animate()
 
+paused = False  # глобальная переменная паузы
+
+def toggle_pause():
+    global paused
+    paused = not paused
+    if paused:
+        pause_button.config(text='Продолжить')
+    else:
+        pause_button.config(text='Пауза')
+        animate()
+
+# Оставьте ваше определение функции animate, но добавьте проверку paused
+def animate():
+    if not paused:
+        update_planets(planets, canvas, log_event, speed=0.01, spawn_chance=life_spawn_chance.get())
+        draw_planets_wrapper()
+        update_tree()
+        window.after(simulation_speed.get(), animate)
+
+# Создайте кнопку паузы, не меняя позиции существующих элементов
+pause_button = Button(text='Пауза', command=toggle_pause)
+# Например, разместить рядом с кнопками Создать и Запустить
+pause_button.place(x=770, y=260)
+
 create_btn = Button(text='Создать', command=gCreate)
-create_btn.place(x=670, y=100)
+create_btn.place(x=670, y=260)
 start_btn = Button(text='Запустить', command=gStart)
-start_btn.place(x=670, y=140)
+start_btn.place(x=670, y=300)
 
 window.mainloop()
