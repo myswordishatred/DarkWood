@@ -6,43 +6,48 @@ from animation import update_planets
 
 window = Tk()
 window.title("DarkWood")
-window.geometry('1100x800')
+window.geometry('1600x900')
 
-canvas = Canvas(bg='black', width=600, height=500)
+canvas = Canvas(bg='black', width=1000, height=600)
 canvas.place(x=10, y=20)
 
 planets_number = Spinbox(from_=50, to=1000)
-planets_number.place(x=615, y=50)
+planets_number.place(x=1015, y=50)
 
-Label(window, text="Шанс появления жизни").place(x=615, y=80)
-life_spawn_chance = DoubleVar(value=0.001)
-Spinbox(window, from_=0.0, to=1.0, increment=0.001, textvariable=life_spawn_chance, format="%.3f").place(x=615, y=100)
+Label(window, text="Шанс появления жизни").place(x=1015, y=80)
+life_spawn_chance = DoubleVar(value=0.00001)
+Spinbox(window, from_=0.0, to=1.0, increment=0.00001, textvariable=life_spawn_chance, format="%.5f").place(x=1015, y=100)
 
-Label(window, text="Шанс агрессии").place(x=615, y=130)
+Label(window, text="Шанс агрессии").place(x=1015, y=130)
 aggression_chance = DoubleVar(value=0.5)
-Spinbox(window, from_=0.0, to=1.0, increment=0.01, textvariable=aggression_chance, format="%.2f").place(x=615, y=150)
+Spinbox(window, from_=0.0, to=1.0, increment=0.01, textvariable=aggression_chance, format="%.2f").place(x=1015, y=150)
 
-Label(window, text="Скорость моделирования (мс)").place(x=615, y=180)
+Label(window, text="Скорость моделирования (мс)").place(x=1015, y=180)
 simulation_speed = IntVar(value=50)
-Spinbox(window, from_=10, to=1000, increment=10, textvariable=simulation_speed).place(x=615, y=200)
+Spinbox(window, from_=10, to=1000, increment=10, textvariable=simulation_speed).place(x=1015, y=200)
 
 show_radii = BooleanVar(value=False)
 checkbox = Checkbutton(text='Показать радиусы', variable=show_radii)
-checkbox.place(x=670, y=230)
+checkbox.place(x=1070, y=230)
 
-log_text = Text(window, width=40, height=10, state=DISABLED)
-log_text.place(x=670, y=330)
+log_text = Text(window, width=60, height=10, state=DISABLED)
+log_text.place(x=1020, y=330)
 
 tree = ttk.Treeview(window)
-tree['columns'] = ('tech_level', 'friends', 'destroyed')
-tree.heading('#0', text='Название')
+
+tree['columns'] = ('tech_level', 'friends', 'destroyed', 'detection_radius')
+
 tree.heading('tech_level', text='Уровень технологии')
 tree.heading('friends', text='Друзья')
 tree.heading('destroyed', text='Уничтожила')
+tree.heading('detection_radius', text='Радиус обнаружения')
+
 tree.column('tech_level', width=100)
 tree.column('friends', width=200)
 tree.column('destroyed', width=200)
-tree.place(x=10, y=530, width=760, height=210)
+tree.column('detection_radius', width=120)
+
+tree.place(x=10, y=650, width=1000, height=210)
 
 planets = []
 
@@ -68,7 +73,11 @@ def update_tree():
             friends_names = ", ".join(sorted(friend.name for friend in planet.connections))
             destroyed_names = ", ".join(sorted(planet.destroyed_planets))
             tree.insert('', END, text=planet.name,
-                        values=(f"{planet.tech_level:.2f}", friends_names, destroyed_names))
+                        values=(f"{planet.tech_level:.2f}",
+                                friends_names,
+                                destroyed_names,
+                                f"{planet.detection_radius:.1f}"))
+
 
 def animate():
     update_planets(planets, canvas, log_event, speed=0.01, spawn_chance=life_spawn_chance.get())
@@ -101,11 +110,11 @@ def animate():
 # Создайте кнопку паузы, не меняя позиции существующих элементов
 pause_button = Button(text='Пауза', command=toggle_pause)
 # Например, разместить рядом с кнопками Создать и Запустить
-pause_button.place(x=770, y=260)
+pause_button.place(x=1170, y=260)
 
 create_btn = Button(text='Создать', command=gCreate)
-create_btn.place(x=670, y=260)
+create_btn.place(x=1070, y=260)
 start_btn = Button(text='Запустить', command=gStart)
-start_btn.place(x=670, y=300)
+start_btn.place(x=1070, y=300)
 
 window.mainloop()

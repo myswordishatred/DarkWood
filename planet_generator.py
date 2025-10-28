@@ -2,23 +2,6 @@ import random
 from planet_system import PlanetSystem
 import math
 
-def hex_to_rgb(hex_color):
-    hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-
-def rgb_to_hex(rgb):
-    return '#{:02x}{:02x}{:02x}'.format(*rgb)
-
-def average_color(planets):
-    r_tot = g_tot = b_tot = 0
-    count = len(planets)
-    for p in planets:
-        r, g, b = hex_to_rgb(p.color)
-        r_tot += r
-        g_tot += g
-        b_tot += b
-    return rgb_to_hex((r_tot // count, g_tot // count, b_tot // count))
-
 def draw_planets(canvas, planets, show_radii=False):
     canvas.delete('all')
     drawn_sets = set()
